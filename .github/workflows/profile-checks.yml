@@ -1,0 +1,41 @@
+name: Profile checks
+
+on:
+  push:
+    branches: [main]
+    paths: [profile/README.md, SECURITY.md, .github/workflows/profile-checks.yml]
+  pull_request:
+    branches: [main]
+    paths: [profile/README.md, SECURITY.md, .github/workflows/profile-checks.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  profile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Verify Aguasto links and logo
+        shell: bash
+        run: |
+          set -euo pipefail
+          urls=(
+            https://www.aguasto.com/
+            https://www.aguasto.com/gpus
+            https://www.aguasto.com/developers
+            https://www.aguasto.com/trust
+            https://www.aguasto.com/security
+            https://www.aguasto.com/brand/apple-touch-icon.png
+            https://console.aguasto.com/gpus
+            https://docs.aguasto.com/
+          )
+          for url in "${urls[@]}"; do
+            grep -Fq "$url" profile/README.md
+            curl --fail --silent --show-error --location --max-time 15 --retry 2 --output /dev/null "$url"
+            printf 'Verified %s\n' "$url"
+          done
